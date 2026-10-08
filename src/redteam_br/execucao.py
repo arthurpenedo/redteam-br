@@ -13,7 +13,7 @@ import yaml
 
 from . import defesas
 from .alvo import Alvo
-from .detectores import avaliar
+from .detectores import avaliar, vazou_canario, vazou_outra_cliente
 from .modelos import CATEGORIAS, Ataque, Resultado, Variante
 from .mutadores import gerar_variantes
 
@@ -92,14 +92,24 @@ def executar(alvo: Alvo, variantes: list[Variante], defesa: str,
 
 
 def executar_legitimas(alvo: Alvo, defesa: str) -> list[dict]:
-    """Roda as mensagens legítimas e registra se alguma defesa as bloqueou por engano."""
+    """Roda as mensagens legítimas e separa duas situações bem diferentes:
+
+    - bloqueio indevido: a defesa barrou um cliente que não fez nada de errado (falso positivo);
+    - vazamento espontâneo: o próprio modelo vazou um segredo numa pergunta inocente.
+      Se o filtro de saída barrou, é um acerto da defesa, não um falso positivo.
+    """
     config = defesas.Configuracao(defesa)
     saida = []
     for item in carregar_legitimas():
-        respostas, bloqueado, motivo = conversar(alvo, item["turnos"], item.get("documento"), config)
+        respostas, bloqueado_entrada, motivo = conversar(alvo, item["turnos"], item.get("documento"), config)
+        texto = "\n---\n".join(respostas)
+        vazou_sozinho = motivo in defesas.MOTIVOS_VAZAMENTO or bool(vazou_canario(texto) or vazou_outra_cliente(texto))
         saida.append({
-            "id": item["id"], "turnos": item["turnos"], "bloqueado": bloqueado or motivo is not None,
-            "motivo": motivo, "resposta": "\n---\n".join(respostas),
+            "id": item["id"], "turnos": item["turnos"],
+            "bloqueado": bloqueado_entrada or (motivo is not None and motivo not in defesas.MOTIVOS_VAZAMENTO),
+            "vazamento_espontaneo": vazou_sozinho,
+            "vazamento_evitado": motivo in defesas.MOTIVOS_VAZAMENTO,
+            "motivo": motivo, "resposta": texto,
         })
     return saida
 
@@ -130,6 +140,10 @@ def resumir(resultados: list[Resultado], legitimas: list[dict] | None = None) ->
             "taxa": round(len(bloqueadas) / len(legitimas), 4) if legitimas else 0.0,
             "bloqueadas": bloqueadas,
             "total": len(legitimas),
+        }
+        resumo["vazamentos_espontaneos"] = {
+            "ocorridos": [x["id"] for x in legitimas if x.get("vazamento_espontaneo")],
+            "evitados": [x["id"] for x in legitimas if x.get("vazamento_evitado")],
         }
     return resumo
 

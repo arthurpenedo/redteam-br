@@ -37,6 +37,9 @@ def _atacar(args: argparse.Namespace) -> int:
     if "falsos_positivos" in r:
         fp = r["falsos_positivos"]
         print(f"Falsos positivos: {fp['taxa']:.0%} ({len(fp['bloqueadas'])}/{fp['total']})")
+        vz = r["vazamentos_espontaneos"]
+        if vz["ocorridos"]:
+            print(f"Vazamentos espontâneos em mensagens legítimas: {len(vz['ocorridos'])} (evitados: {len(vz['evitados'])})")
     return 0
 
 
