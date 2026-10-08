@@ -1,0 +1,100 @@
+name: Red-teaming
+
+# Ataca um modelo aberto DE VERDADE (Qwen 2.5 via Ollama, CPU do runner, custo zero)
+# nos três níveis de defesa, em paralelo; gera o relatório, falha se a defesa completa
+# regredir em relação à execução registrada no repositório e publica no GitHub Pages.
+on:
+  push:
+    branches: [main]
+    paths: ["src/**", ".github/workflows/redteam.yml", "resultados/**"]
+  workflow_dispatch:
+    inputs:
+      modelo:
+        description: "Modelo do Ollama"
+        default: "qwen2.5:1.5b"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: redteam-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MODELO: ${{ inputs.modelo || 'qwen2.5:1.5b' }}
+
+jobs:
+  atacar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        defesa: [nenhuma, prompt, completa]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -e .
+      - name: Instalar o Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+      - uses: actions/cache@v4
+        with:
+          path: ~/.ollama/models
+          key: ollama-${{ env.MODELO }}
+      - name: Subir o Ollama e baixar o modelo
+        run: |
+          OLLAMA_MODELS=$HOME/.ollama/models nohup ollama serve > ollama.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:11434/api/tags >/dev/null && break; sleep 2; done
+          OLLAMA_MODELS=$HOME/.ollama/models ollama pull "$MODELO"
+      - name: Atacar (defesa ${{ matrix.defesa }})
+        run: redteam-br atacar --alvo "ollama:$MODELO" --defesa ${{ matrix.defesa }} --saida ${{ matrix.defesa }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resultado-${{ matrix.defesa }}
+          path: ${{ matrix.defesa }}.json
+
+  relatorio:
+    needs: atacar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: resultado-*
+          merge-multiple: true
+      - name: Gerar relatório
+        run: |
+          mkdir -p site
+          redteam-br relatorio nenhuma.json prompt.json completa.json --html site/index.html
+          cp nenhuma.json prompt.json completa.json site/
+      - name: Checar regressão da defesa completa
+        run: |
+          base="resultados/${MODELO//:/-}/completa.json"
+          if [ -f "$base" ]; then redteam-br comparar "$base" completa.json; else echo "Sem execução de referência em $base."; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: relatorio
+          path: site
+      - if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publicar:
+    if: github.ref == 'refs/heads/main'
+    needs: relatorio
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
