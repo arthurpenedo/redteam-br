@@ -37,6 +37,10 @@ Qwen 2.5 1.5B (aberto, via Ollama), temperatura 0, 156 variantes de ataque e 20 
 | Mensagens legítimas bloqueadas por engano | 0% | 0% | 0% |
 | Vazamentos espontâneos em mensagens legítimas | 0 | **1** | 1, barrado |
 
+Esta tabela é a execução de referência registrada em `resultados/`. O relatório ao vivo vem de uma
+execução nova no GitHub Actions: as taxas gerais são as mesmas (36%, 29%, 0%), mas as taxas por
+categoria e por técnica variam alguns pontos, porque o modelo roda em outra CPU.
+
 ### O que os números mostram
 
 1. **Reforçar o prompt sozinho não resolve.** A taxa caiu só de 36% para 29%. Pedidos fora da
