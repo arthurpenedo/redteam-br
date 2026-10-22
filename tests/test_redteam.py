@@ -1,11 +1,21 @@
 import base64
 
 import pytest
-
 from redteam_br import defesas
 from redteam_br.alvo import CANARIO, CLIENTE_ATUAL, OUTRA_CLIENTE, RoteiroAlvo
-from redteam_br.detectores import avaliar, contem_frase, vazou_canario, vazou_outra_cliente
-from redteam_br.execucao import carregar_ataques, carregar_legitimas, executar, executar_legitimas, resumir
+from redteam_br.detectores import (
+    avaliar,
+    contem_frase,
+    vazou_canario,
+    vazou_outra_cliente,
+)
+from redteam_br.execucao import (
+    carregar_ataques,
+    carregar_legitimas,
+    executar,
+    executar_legitimas,
+    resumir,
+)
 from redteam_br.modelos import Ataque
 from redteam_br.mutadores import gerar_variantes
 

@@ -9,7 +9,13 @@ from pathlib import Path
 
 from . import __version__, relatorio
 from .alvo import criar_alvo
-from .execucao import carregar_ataques, executar, executar_legitimas, gerar_variantes, salvar
+from .execucao import (
+    carregar_ataques,
+    executar,
+    executar_legitimas,
+    gerar_variantes,
+    salvar,
+)
 from .modelos import CATEGORIAS
 
 
