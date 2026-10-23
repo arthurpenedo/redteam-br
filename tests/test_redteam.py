@@ -1,6 +1,7 @@
 import base64
 
 import pytest
+
 from redteam_br import defesas
 from redteam_br.alvo import CANARIO, CLIENTE_ATUAL, OUTRA_CLIENTE, RoteiroAlvo
 from redteam_br.detectores import (
