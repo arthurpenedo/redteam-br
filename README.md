@@ -134,7 +134,7 @@ porque o cliente nem sabe que está atacando.
 ```bash
 git clone https://github.com/arthurpenedo/redteam-br && cd redteam-br
 pip install -e ".[dev]"
-pytest -q                                   # 22 testes, sem precisar de modelo
+pytest -q                                   # 27 testes, sem precisar de modelo
 
 # com o Ollama rodando (ollama pull qwen2.5:1.5b)
 redteam-br listar
