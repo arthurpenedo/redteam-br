@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import contextlib
 import re
 import unicodedata
 from dataclasses import dataclass
@@ -95,10 +96,8 @@ def _expandir(texto: str) -> str:
     """Desfaz os disfarces mais comuns antes de procurar padrões: base64, leetspeak e divisão em variáveis."""
     partes = [texto, texto.translate(_DE_LEET)]
     for bloco in _BASE64.findall(texto):
-        try:
+        with contextlib.suppress(binascii.Error, ValueError):
             partes.append(base64.b64decode(bloco, validate=True).decode("utf-8", "ignore"))
-        except (binascii.Error, ValueError):
-            pass
     aspas = re.findall(r'"([^"]*)"', texto)
     if len(aspas) >= 2:
         partes.append("".join(aspas))  # a = "...", b = "..." -> a + b
