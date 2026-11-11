@@ -27,10 +27,10 @@ def test_atacar_sem_legitimas_nao_mede_falsos_positivos(tmp_path, monkeypatch, c
 
 
 @pytest.mark.parametrize("campos, mensagem", [
-    (dict(categoria="inexistente", objetivo="marcador", marcador="x"), "categoria desconhecida"),
-    (dict(categoria="vazamento_prompt", objetivo="inexistente"), "objetivo desconhecido"),
-    (dict(categoria="vazamento_prompt", objetivo="frase_proibida"), "exige o campo frase_proibida"),
-    (dict(categoria="vazamento_prompt", objetivo="marcador"), "exige o campo marcador"),
+    ({"categoria": "inexistente", "objetivo": "marcador", "marcador": "x"}, "categoria desconhecida"),
+    ({"categoria": "vazamento_prompt", "objetivo": "inexistente"}, "objetivo desconhecido"),
+    ({"categoria": "vazamento_prompt", "objetivo": "frase_proibida"}, "exige o campo frase_proibida"),
+    ({"categoria": "vazamento_prompt", "objetivo": "marcador"}, "exige o campo marcador"),
 ])
 def test_ataque_invalido_levanta_erro_claro(campos, mensagem):
     with pytest.raises(ValueError, match=mensagem):
