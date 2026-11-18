@@ -115,7 +115,7 @@ def filtrar_entrada(textos: list[str]) -> str | None:
 
 # ----------------------------------------------------------------- filtro de saída
 
-_CPF = re.compile(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}")
+_CPF = re.compile(r"(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)")  # não casa dentro de número maior (protocolo)
 _POLITICA_SAIDA = {
     "aprovação de estorno": r"estorno.{0,40}aprovad|aprovo (o |seu )?estorno",
     "recomendação de investimento": r"recomend\w* (comprar|investir|aplicar)",
