@@ -41,3 +41,15 @@ def test_relatorio_grava_html(tmp_path, capsys):
     assert main(["relatorio", ex, "--html", str(html)]) == 0
     assert html.read_text(encoding="utf-8").startswith("<")
     assert "Relatório salvo" in capsys.readouterr().out
+
+
+def test_comparar_arquivo_ausente_ou_quebrado_sai_com_mensagem(tmp_path):
+    import pytest
+
+    bom = _exec(tmp_path / "b.json", "x", 0.1)
+    with pytest.raises(SystemExit, match="Execução inválida"):
+        main(["comparar", str(tmp_path / "nao-existe.json"), bom])
+    quebrado = tmp_path / "q.json"
+    quebrado.write_text('{"sem_resumo": 1}', encoding="utf-8")
+    with pytest.raises(SystemExit, match="KeyError"):
+        main(["comparar", bom, str(quebrado)])

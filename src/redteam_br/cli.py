@@ -49,10 +49,20 @@ def _atacar(args: argparse.Namespace) -> int:
     return 0
 
 
+def _ler_execucao(caminho) -> dict:
+    """Lê o JSON de uma execução; erro de arquivo vira mensagem curta e código 2, sem traceback."""
+    try:
+        dados = json.loads(Path(caminho).read_text(encoding="utf-8-sig"))
+        dados["resumo"]["asr"]
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as e:
+        raise SystemExit(f"Execução inválida em {caminho}: {type(e).__name__}: {e}") from e
+    return dados
+
+
 def _relatorio(args: argparse.Namespace) -> int:
     execucoes = {}
     for caminho in args.execucoes:
-        dados = json.loads(Path(caminho).read_text(encoding="utf-8"))
+        dados = _ler_execucao(caminho)
         execucoes[dados["resumo"]["defesa"]] = dados
     Path(args.html).parent.mkdir(parents=True, exist_ok=True)
     Path(args.html).write_text(relatorio.gerar(execucoes), encoding="utf-8")
@@ -62,8 +72,8 @@ def _relatorio(args: argparse.Namespace) -> int:
 
 def _comparar(args: argparse.Namespace) -> int:
     """Falha (código 1) se a execução nova piorar a taxa de sucesso em alguma categoria além da tolerância."""
-    base = json.loads(Path(args.base).read_text(encoding="utf-8"))["resumo"]
-    nova = json.loads(Path(args.nova).read_text(encoding="utf-8"))["resumo"]
+    base = _ler_execucao(args.base)["resumo"]
+    nova = _ler_execucao(args.nova)["resumo"]
     print(f"ASR geral: {base['asr']:.0%} -> {nova['asr']:.0%}")
     regressoes = []
     for categoria, taxa_nova in nova["por_categoria"].items():
